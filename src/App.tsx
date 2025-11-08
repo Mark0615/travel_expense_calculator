@@ -7,8 +7,11 @@ type Payment = {
 };
 
 // 金額格式化（整數、千分位）
-const moneyFmt = new Intl.NumberFormat("en-US", { maximumFractionDigits: 0 });
-const formatMoney = (value: number) => moneyFmt.format(Math.round(value));
+const moneyFmt = new Intl.NumberFormat("en-US", { 
+  minimumFractionDigits: 2,
+  maximumFractionDigits: 2,
+ });
+const formatMoney = (value: number) => moneyFmt.format(value);
 
 function calculate(people: string[], payments: Payment[]) {
   const balance: Record<string, number> = Object.fromEntries(
@@ -19,6 +22,10 @@ function calculate(people: string[], payments: Payment[]) {
     const share = amount / beneficiaries.length;
     for (const b of beneficiaries) balance[b] -= share;
     balance[payer] += amount;
+  }
+
+  for (const key in balance) {
+    balance[key] = parseFloat(balance[key].toFixed(2));
   }
 
   const creditors = Object.entries(balance)
@@ -32,12 +39,11 @@ function calculate(people: string[], payments: Payment[]) {
     .sort((a, b) => b[1] - a[1]);
 
   const settlements: [string, string, number][] = [];
-  let i = 0,
-    j = 0;
+  let i = 0, j = 0;
 
   while (i < debtors.length && j < creditors.length) {
     const pay = Math.min(debtors[i][1], creditors[j][1]);
-    settlements.push([debtors[i][0], creditors[j][0], pay]);
+    settlements.push([debtors[i][0], creditors[j][0], parseFloat(pay.toFixed(2))]);
     debtors[i][1] -= pay;
     creditors[j][1] -= pay;
     if (debtors[i][1] < 1e-6) i++;
@@ -102,7 +108,7 @@ export default function App() {
             value={count}
             onChange={(e) => {
               const raw = e.target.value;
-              const n = Number(raw || 0);
+              const n = Math.floor(Number(raw || 0));
               setCount(raw);
               setNames((prev) =>
                 n > prev.length
